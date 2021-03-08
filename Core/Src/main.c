@@ -43,8 +43,19 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint16_t ButtonMstate = 0;//-------------++++++
+uint16_t ButtonMstate = 0;//-------------++++++++++++
+uint16_t ButtonMstatePast = 0;
+uint16_t ButtonMstateSeen = 0;
+uint16_t PassWord[11] = {};
 uint32_t Timestamp = 0;
+GPIO_TypeDef *ButtomMPort[8] = {GPIOA,GPIOB,GPIOB,GPIOB,GPIOA,GPIOC,GPIOB,GPIOA};
+uint16_t ButtomM[8] = {GPIO_PIN_10,GPIO_PIN_3,GPIO_PIN_5,GPIO_PIN_4,GPIO_PIN_9,GPIO_PIN_7,GPIO_PIN_6,GPIO_PIN_7};
+uint8_t ButtomLine = 0; //r
+uint8_t f = 0;
+uint8_t t = 0;
+uint8_t p = 0;
+int test=0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,6 +79,10 @@ void buttomUpdata(void);//---------++++++++++
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	if(f==0){
+		f=1;
+		HAL_GPIO_WritePin(ButtomMPort[4], ButtomM[4], GPIO_PIN_RESET);
+	}
 
   /* USER CODE END 1 */
 
@@ -99,6 +114,44 @@ int main(void)
   while (1)
   {
 	buttomUpdata();
+	if(ButtonMstateSeen == 0b0000000000000001){//0
+		PassWord[p] = 0; p++;
+	}
+	else if(ButtonMstateSeen == 0b0000000000001000){//ok
+
+	}
+	else if(ButtonMstateSeen == 0b0000000000010000){//1
+		PassWord[p] = 1; p++;
+		}
+	else if(ButtonMstateSeen == 0b0000000000100000){//2
+		PassWord[p] = 2; p++;
+		}
+	else if(ButtonMstateSeen == 0b0000000001000000){//3
+		PassWord[p] = 3; p++;
+		}
+	else if(ButtonMstateSeen == 0b0000000100000000){//4
+		PassWord[p] = 4; p++;
+		}
+	else if(ButtonMstateSeen == 0b0000001000000000){//5
+		PassWord[p] = 5; p++;
+		}
+	else if(ButtonMstateSeen == 0b0000010000000000){//6
+		PassWord[p] = 6; p++;
+		}
+	else if(ButtonMstateSeen == 0b0001000000000000){//7
+		PassWord[p] = 7; p++;
+		}
+	else if(ButtonMstateSeen == 0b0010000000000000){//8
+		PassWord[p] = 8; p++;
+		}
+	else if(ButtonMstateSeen == 0b0100000000000000){//9
+		PassWord[p] = 9; p++;
+		}
+	else if(ButtonMstateSeen == 0b1000000000000000){//clear
+		for(int o = 0;o<12;o++) PassWord[o]=0; p=0;
+		}
+	ButtonMstateSeen = 0;
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -259,37 +312,40 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-// 0-3 INPUT 4-7 OUTPUT
-GPIO_TypeDef *ButtomMPort[8] = {GPIOA,GPIOB,GPIOB,GPIOB,GPIOA,GPIOC,GPIOB,GPIOA};
-uint16_t ButtomM[8] = {GPIO_PIN_10,GPIO_PIN_3,GPIO_PIN_5,GPIO_PIN_4,GPIO_PIN_9,GPIO_PIN_7,GPIO_PIN_6,GPIO_PIN_7};
-uint8_t ButtomLine = 0; //r
-uint8_t f = 0;
+// 0-3 INPUT 4-7 OUTPUT /// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void buttomUpdata()///----+++++++++++++++++
 {
-	if(f==0){
-		f=1;
-		HAL_GPIO_WritePin(ButtomMPort[4], ButtomM[4], GPIO_PIN_RESET);
-	}
-	if(HAL_GetTick() - Timestamp >= 100){
+
+	if(HAL_GetTick() - Timestamp >= 50){
 		Timestamp = HAL_GetTick();
-		for(int i=0; i<4; i++){
-			GPIO_PinState PinState = HAL_GPIO_ReadPin(ButtomMPort[i], ButtomM[i]);
-			if(PinState == GPIO_PIN_RESET){
-				ButtonMstate |= (uint16_t)1 << (i + ButtomLine * 4);
+		int i;
+		t++;
+//		for(t=0; t<4; t++){
+			for(i=0; i<4; i++){
+				GPIO_PinState PinState = HAL_GPIO_ReadPin(ButtomMPort[i], ButtomM[i]);
+				if(PinState == GPIO_PIN_RESET){
+					ButtonMstate |= (uint16_t)1 << (i + ButtomLine * 4);
+//					ButtonMstate |= (uint16_t)1 << (i);
+				}
+				if(t==16) {
+					if(ButtonMstatePast != 0 && ButtonMstate == 0){
+						ButtonMstateSeen = ButtonMstatePast;
+					}
+					ButtonMstatePast = ButtonMstate;
+					ButtonMstate &= ~(uint16_t)1 << (16);
+					t=0;
+				}
 			}
-			else {
-				ButtonMstate &= ~(uint16_t)1 << (i + ButtomLine * 4);
-			}
-		}
-		uint8_t ButtomLineNow = ButtomLine + 4;
-		HAL_GPIO_WritePin(ButtomMPort[ButtomLineNow], ButtomM[ButtomLineNow], GPIO_PIN_SET);
+			uint8_t ButtomLineNow = ButtomLine + 4;
+			HAL_GPIO_WritePin(ButtomMPort[ButtomLineNow], ButtomM[ButtomLineNow], GPIO_PIN_SET);
 
-		ButtomLine = (ButtomLine+1) % 4;
+			ButtomLine = ((ButtomLine+1) % 4);
 
-		uint8_t ButtomLineNext = ButtomLine + 4;
-		HAL_GPIO_WritePin(ButtomMPort[ButtomLineNext], ButtomM[ButtomLineNext], GPIO_PIN_RESET);
+			uint8_t ButtomLineNext = ButtomLine + 4;
+			HAL_GPIO_WritePin(ButtomMPort[ButtomLineNext], ButtomM[ButtomLineNext], GPIO_PIN_RESET);
 
+//		}
 	}
 }
 /* USER CODE END 4 */
