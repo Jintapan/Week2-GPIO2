@@ -1,4 +1,4 @@
-/* USER CODE BEGIN Header */
+ /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -151,7 +151,7 @@ int main(void)
 		PassWord[p] = 9; p++;
 		}
 	else if(ButtonMstateSeen == 0b1000000000000000){//clear
-		for(int o = 0;o<12;o++) PassWord[o]=0; p=0;
+		for(int o = 0;o<12;o++) PassWord[o]=0; p=0;test = 0; HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, RESET);
 		}
 	ButtonMstateSeen = 0;
 
@@ -355,6 +355,7 @@ void check()
 		}
 	}
 	if(test == 11){
+		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 		test = 999;
 	}
 	else {
